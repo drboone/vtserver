@@ -5,7 +5,7 @@
 
                              wkt@cs.adfa.oz.au
 
-                         Version 1.0, February 1998
+                       Version 1.1, 3rd February 1998
 
 Caveat
 
@@ -82,7 +82,7 @@ icheck:
 restor:
      Standalone restor(1) program.
 
-Additional files, which are described in Section 16, are also available in
+Additional files, which are described in Section 17, are also available in
 this directory. You will need at least v7rootdump. This comes as a Gzip'd
 file, and you will need to unzip it. You probably want to get all of the .Z
 files from the FTP site above. Don't uncompress them, as they can be loaded
@@ -97,7 +97,7 @@ when you get to Section 10.
 
 It is a good idea to have the other Seventh Edition UNIX manuals on-hand as
 you start using the system. You can install them onto your PDP-11 (see
-Section 16), or you can access them over the web at
+Section 17), or you can access them over the web at
 
 http://www.de.freebsd.org/de/cgi/man.cgi?manpath=Unix+Seventh+Edition
 
@@ -194,19 +194,11 @@ retrieves the file boot from the vtserver. This code should be entered at
 address 070000 onwards. The code is given in the vtboot.pdp, and in octal
 below.
 
-0070000:  012706 136774 012701 000000 012703 176500 012700 000037
-0070020:  004567 000124 012700 000052 004567 000114 012700 000000
-0070040:  004567 000104 004567 000100 016700 000126 005267 000122
-0070060:  004567 000064 012700 000000 004567 000054 004567 000030
-0070100:  001402 000167 107672 012702 001000 004567 000012 110011
-0070120:  005201 005302 001372 000732 012713 000001 032713 000200
-0070140:  001775 116300 000002 000205 032763 000200 000004 001774
-0070160:  016304 000004 005063 000004 010063 000006 010463 000004
-0070200:  000205 000000
-
-Ok, that's 66 words, which is pretty long. This is my first piece of PDP-11
-assembly code, so if you think you can tighten it up, let me know and I'll
-send you the assembly source.
+0070000:  010706 005001 012703 176500 012704 070102 112400 100406
+0070020:  105763 000004 100375 110063 000006 000770 005267 000046
+0070040:  004767 000024 001401 005007 012702 001000 004767 000010
+0070060:  110021 005302 001373 000750 105713 100376 116300 000002
+0070100:  000207 025037 000000 000000 177777
 
 Toggle in the code, and start execution at address 70000. If all goes well,
 you will see ``Opened boot qrqrr...'' from vtserver, and you will receive
@@ -252,7 +244,7 @@ Filesystem Sizes
 For some of the disk types, 7th Edition UNIX reserves space on the boot disk
 for swap. Therefore, you must ensure that your root filesystem doesn't
 overlap the swap space. Each compiled UNIX kernel has a different idea where
-the swap space is. Section 17 gives the configuration files for each UNIX
+the swap space is. Section 18 gives the configuration files for each UNIX
 kernel image supplied.
 
 Note that for some disk types, the swap space is on the second disk unit,
@@ -329,38 +321,6 @@ One of the first things you should do once you have booted to a shell prompt
 is to `cd' into /dev and make appropriate devices for your system. Read
 /dev/makefile and v7_setup.txt for details.
 
-     Note - I suspect that the `standard' character devices created by
-     the makefile are not correct for the RL02 UNIX kernel image, as
-     this was built by someone else. Please let me know if you have
-     troubles with this, and I will try to build a new rl2unix. Below
-     is a listing of /dev using the supplied rl2unix: you may need to
-     hand-make these devices.
-
-             crw--w--w-   2 root     other      0,  0 Sep 22 10:33 console
-             crw-r--r--   1 bin      bin        2,  1 Sep 17  1981 kmem
-             crw-r--r--   1 bin      bin        2,  0 Sep 17  1981 mem
-             brw-r--r--   1 root     root       0,  0 May  2  1986 mt0
-             brw-r--r--   1 root     root       0,128 Sep 17  1981 nmt0
-             crw-r--r--   1 root     root      10,128 Jul 29 20:22 nrmt0
-             crw-rw-rw-   1 bin      bin        2,  2 Jun 22 18:41 null
-             brw-r--r--   1 root     other      4,  0 Sep 22 10:09 rk0
-             brw-r--r--   1 root     other      4,  1 Sep 22 10:09 rk1
-             brw-r--r--   2 root     root       3,  0 Apr 13  1986 rl0
-             brw-r--r--   1 root     root       3,  1 Aug 24 12:13 rl1
-             crw-r--r--   1 root     root      10,  0 Sep 22 10:05 rmt0
-             crw-r--r--   1 root     other     13,  0 Sep 22 10:09 rrk0
-             crw-r--r--   1 root     other     13,  1 Sep 22 10:09 rrk1
-             crw-r--r--   1 root     root      12,  0 Sep 22 09:11 rrl0
-             crw-r--r--   1 root     root      12,  1 Sep 22 10:31 rrl1
-             crw-rw-r--   1 root     other     12,  2 Sep 22 10:30 rrl2
-             brw-r--r--   2 root     root       3,  0 Apr 13  1986 swap
-             crw-rw-rw-   1 bin      bin        1,  0 Jun 22 18:40 tty
-             crw--w--w-   1 root     root       1,  2 Jun 22 18:40 tty2
-             crw--w--w-   1 root     root       1,  3 Jun 22 18:40 tty3
-             crw--w--w-   1 root     root       1,  4 Jun  2 10:55 tty4
-             crw--w--w-   1 root     root       1,  1 Jun 22 18:41 ttya
-             crw--w--w-   2 root     other      0,  0 Sep 22 10:33 ttye
-
 With this done, you must then write the disk bootstrap code into the first
 block of the boot disk. Change into the /mdec directory and do:
 
@@ -378,6 +338,21 @@ block of the boot disk. Change into the /mdec directory and do:
 
 depending on your disk type. Fingers crossed, you can shut UNIX down
 (gracefully), and reboot using the disk.
+
+Booting UNIX from Disk
+
+At the moment there is a small problem which makes booting slightly more
+cumbersome than it should be. The RK and RL disk boot blocks come from a
+non-vanilla 7th Edition UNIX: vanilla V7 didn't have bootstraps for RKs or
+RLs. To boot from either of these disks, you first have to boot the VT
+bootloader. For example:
+
+  @boot                 <=== Normally you could type rl2unix here
+  New Boot, known devices are hp ht rk rl rp tm vt
+  : rl(0,0)rl2unix
+  mem = 178048
+  # STTY -LCASE
+  # sync
 
 Comments on hp and rp Disks
 
@@ -437,6 +412,8 @@ extracted from  /. The distribution does not contain any source code, due to
 licensing reasons. The files v7rootdump, v7doc.tar.Z and v7lib.tar.Z are
 copyright SCO and you must agree to the binary license described in the file
 unix_license.txt before you use them.
+
+N.B /dev/tty1 doesn't seem to work yet!
 
 I have added two programs for extracting these files to /bin: uncompress and
 vtcat. Once you have rebooted and partitioned your disks, you can used these
@@ -523,4 +500,4 @@ bootstrap code, vtboot.s, and the VT client code, vt.c. I have also borrowed
 the rl.c code from 2.9BSD, to allow RL02s to be used.
 ----------------------------------------------------------------------------
 Warren Toomey
-2/2/1998
+2/3/1998

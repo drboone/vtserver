@@ -20,7 +20,7 @@
 <FONT SIZE="+2"><B>VTserver: Installing V7 UNIX with No Tape Drive</FONT></B>
 <P><BIG><B>Warren Toomey</BIG></B>
 <P><BIG><I>wkt@cs.adfa.oz.au</BIG></I>
-<P><BIG>Version 1.0, February 1998</BIG>
+<P><BIG>Version 1.1, 3rd February 1998</BIG>
 </DIV><H1><A NAME="SECTION00010000000000000000">
 Caveat</A>
 </H1>
@@ -105,7 +105,7 @@ equivalent PostScript file, <B>vtreadme.ps</B>.
 <DD>Standalone restor(1) program.
 </DL>
 <P>
-Additional files, which are described in Section&nbsp;<A HREF="vtreadme.html#restofv7">16</A>, are also
+Additional files, which are described in Section&nbsp;<A HREF="vtreadme.html#restofv7">17</A>, are also
 available in this directory. You will need at least <TT>v7rootdump</TT>. This
 comes as a Gzip'd file, and you will need to unzip it. You probably want to
 get all of the .Z files from the FTP site above. Don't uncompress them,
@@ -121,7 +121,7 @@ instructions when you get to Section&nbsp;<A HREF="vtreadme.html#boot2">10</A>.
 <P>
 It is a good idea to have the other Seventh Edition UNIX manuals on-hand as you
 start using the system. You can install them onto your PDP-11 (see
-Section&nbsp;<A HREF="vtreadme.html#restofv7">16</A>), or you can access them over the web at <BR>
+Section&nbsp;<A HREF="vtreadme.html#restofv7">17</A>), or you can access them over the web at <BR>
 <P>
 http://www.de.freebsd.org/de/cgi/man.cgi?manpath=Unix+Seventh+Edition
 <P><H1><A NAME="SECTION00050000000000000000">
@@ -227,20 +227,12 @@ retrieves the file <TT>boot</TT> from the <TT>vtserver</TT>. This code should
 be entered at address 070000 onwards. The code is given in the
 <TT>vtboot.pdp</TT>, and in octal below.
 <P><PRE>
-0070000:  012706 136774 012701 000000 012703 176500 012700 000037
-0070020:  004567 000124 012700 000052 004567 000114 012700 000000
-0070040:  004567 000104 004567 000100 016700 000126 005267 000122
-0070060:  004567 000064 012700 000000 004567 000054 004567 000030
-0070100:  001402 000167 107672 012702 001000 004567 000012 110011
-0070120:  005201 005302 001372 000732 012713 000001 032713 000200
-0070140:  001775 116300 000002 000205 032763 000200 000004 001774
-0070160:  016304 000004 005063 000004 010063 000006 010463 000004
-0070200:  000205 000000
+0070000:  010706 005001 012703 176500 012704 070102 112400 100406
+0070020:  105763 000004 100375 110063 000006 000770 005267 000046
+0070040:  004767 000024 001401 005007 012702 001000 004767 000010
+0070060:  110021 005302 001373 000750 105713 100376 116300 000002
+0070100:  000207 025037 000000 000000 177777
 </PRE>
-<P>
-Ok, that's 66 words, which is pretty long. This is my <I>first</I> piece of
-PDP-11 assembly code, so if you think you can tighten it up, let me know
-and I'll send you the assembly source.
 <P>
 Toggle in the code, and start execution at address 70000. If all goes well,
 you will see ``Opened boot qrqrr...'' from <TT>vtserver</TT>,
@@ -290,7 +282,7 @@ Filesystem Sizes</A>
 For some of the disk types, 7th Edition UNIX reserves space on the boot disk
 for swap. Therefore, you must ensure that your root filesystem doesn't
 overlap the swap space. Each compiled UNIX kernel has a different idea
-where the swap space is. Section&nbsp;<A HREF="vtreadme.html#conffiles">17</A> gives the configuration
+where the swap space is. Section&nbsp;<A HREF="vtreadme.html#conffiles">18</A> gives the configuration
 files for each UNIX kernel image supplied.
 <P>
 Note that for some disk types, the swap space is on the <B>second</B>
@@ -392,39 +384,6 @@ v7_setup.txt</TT>.
 One of the first things you should do once you have booted to a shell prompt
 is to `cd' into <TT>/dev</TT> and make appropriate devices for your system.
 Read <TT>/dev/makefile</TT> and <TT>v7_setup.txt</TT> for details.
-<P><BLOCKQUOTE>
-<I>Note - I suspect that the `standard' character devices created by the
-makefile are not correct for the RL02 UNIX kernel image, as this was built
-by someone else. Please let me know if you have troubles with this, and I
-will try to build a new <TT>rl2unix</TT>.</I> Below is a listing of <TT>/dev</TT>
-using the supplied <TT>rl2unix</TT>: you may need to hand-make these devices.
-<P><PRE>
-        crw--w--w-   2 root     other      0,  0 Sep 22 10:33 console
-        crw-r--r--   1 bin      bin        2,  1 Sep 17  1981 kmem
-        crw-r--r--   1 bin      bin        2,  0 Sep 17  1981 mem
-        brw-r--r--   1 root     root       0,  0 May  2  1986 mt0
-        brw-r--r--   1 root     root       0,128 Sep 17  1981 nmt0
-        crw-r--r--   1 root     root      10,128 Jul 29 20:22 nrmt0
-        crw-rw-rw-   1 bin      bin        2,  2 Jun 22 18:41 null
-        brw-r--r--   1 root     other      4,  0 Sep 22 10:09 rk0
-        brw-r--r--   1 root     other      4,  1 Sep 22 10:09 rk1
-        brw-r--r--   2 root     root       3,  0 Apr 13  1986 rl0
-        brw-r--r--   1 root     root       3,  1 Aug 24 12:13 rl1
-        crw-r--r--   1 root     root      10,  0 Sep 22 10:05 rmt0
-        crw-r--r--   1 root     other     13,  0 Sep 22 10:09 rrk0
-        crw-r--r--   1 root     other     13,  1 Sep 22 10:09 rrk1
-        crw-r--r--   1 root     root      12,  0 Sep 22 09:11 rrl0
-        crw-r--r--   1 root     root      12,  1 Sep 22 10:31 rrl1
-        crw-rw-r--   1 root     other     12,  2 Sep 22 10:30 rrl2
-        brw-r--r--   2 root     root       3,  0 Apr 13  1986 swap
-        crw-rw-rw-   1 bin      bin        1,  0 Jun 22 18:40 tty
-        crw--w--w-   1 root     root       1,  2 Jun 22 18:40 tty2
-        crw--w--w-   1 root     root       1,  3 Jun 22 18:40 tty3
-        crw--w--w-   1 root     root       1,  4 Jun  2 10:55 tty4
-        crw--w--w-   1 root     root       1,  1 Jun 22 18:41 ttya
-        crw--w--w-   2 root     other      0,  0 Sep 22 10:33 ttye
-</PRE>
-</BLOCKQUOTE>
 <P>
 With this done, you must then write the disk bootstrap code into the
 first block of the boot disk. Change into the <TT>/mdec</TT> directory and do:
@@ -454,6 +413,23 @@ first block of the boot disk. Change into the <TT>/mdec</TT> directory and do:
 depending on your disk type. Fingers crossed, you can shut UNIX down
 (gracefully), and reboot using the disk.
 <P><H1><A NAME="SECTION000150000000000000000">
+Booting UNIX from Disk</A>
+</H1>
+<P>
+At the moment there is a small problem which makes booting slightly more
+cumbersome than it should be. The RK and RL disk boot blocks come from
+a non-vanilla 7th Edition UNIX: vanilla V7 didn't have bootstraps for RKs or RLs.
+To boot from either of these disks, you first have to boot the VT bootloader.
+For example:
+<P><PRE>
+  @boot			&lt;=== Normally you could type rl2unix here
+  New Boot, known devices are hp ht rk rl rp tm vt 
+  : rl(0,0)rl2unix
+  mem = 178048
+  # STTY -LCASE
+  # sync
+</PRE>
+<P><H1><A NAME="SECTION000160000000000000000">
 Comments on <TT>hp</TT> and <TT>rp</TT> Disks</A>
 </H1>
 <P>
@@ -523,7 +499,7 @@ The following table gives the available disk devices.
 <P>
 This means, for example, that you could use <TT>/dev/hp0</TT> as your root
 partition, <TT>/dev/hp1</TT> for <TT>/usr</TT> and <TT>/dev/hp4</TT> for <TT>home</TT>.
-<P><H1><A NAME="SECTION000160000000000000000">
+<P><H1><A NAME="SECTION000170000000000000000">
 The Rest of Seventh Edition</A>
 </H1>
 <A NAME="restofv7">&#160;</A>
@@ -552,6 +528,7 @@ from&nbsp; <TT>/</TT>. The distribution does not contain any source code, due to
 licensing reasons. The files <TT>v7rootdump</TT>, <TT>v7doc.tar.Z</TT> and
 <TT>v7lib.tar.Z</TT> are copyright SCO and you must agree to the binary license
 described in the file <TT>unix_license.txt</TT> before you use them.
+<P><BIG><I>N.B /dev/tty1 doesn't seem to work yet!</BIG></I>
 <P>
 I have added two programs for extracting these files to <TT>/bin</TT>:
 <TT>uncompress</TT> and <TT>vtcat</TT>. Once you have rebooted and partitioned
@@ -570,7 +547,7 @@ For those who are tight on disk space, you can untar both tarballs, and
 build new tarballs with only those parts of 7th Edition UNIX you require.
 You need to create `old style' tarballs (use the Gnu <TT>tar</TT> -o option), and
 compress the tarballs with the -b12 option to <TT>compress</TT>.
-<P><H1><A NAME="SECTION000170000000000000000">
+<P><H1><A NAME="SECTION000180000000000000000">
 System-specific Kernel Configuration Files</A>
 </H1>
 <A NAME="conffiles">&#160;</A>
@@ -647,7 +624,7 @@ See the 7th Edition mkconf(1) for more details.
 <TR VALIGN="TOP"><TD ALIGN="LEFT" NOWRAP>nswap 872</TD>
 <TD ALIGN="LEFT" NOWRAP>nswap 2480</TD>
 </TR>
-</TABLE></DIV><H1><A NAME="SECTION000180000000000000000">
+</TABLE></DIV><H1><A NAME="SECTION000190000000000000000">
 Changes from Vanilla 7th Edition UNIX</A>
 </H1>
 <P>
@@ -675,7 +652,7 @@ also borrowed the <TT>rl.c</TT> code from 2.9BSD, to allow RL02s to be used.
 <!--End of Navigation Panel-->
 <ADDRESS>
 <I>Warren Toomey <BR>
-2/2/1998</I>
+2/3/1998</I>
 </ADDRESS>
 </BODY>
 </HTML>

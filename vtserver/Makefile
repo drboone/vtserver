@@ -23,4 +23,4 @@ vtreadme.html:	vtreadme.tex vtreadme.dvi
 tar:	.vtrc Makefile vtserver.c vtreadme.txt vtreadme.ps vtreadme.html \
 	vtreadme.css boot cat icheck mkfs restor tape_contents vtboot.pdp \
 	unix_licence.txt v7_setup.txt v7_setup.ps
-	tar voczhf vtserver1.0.tar.gz $>
+	tar voczhf vtserver1.1.tar.gz $>
