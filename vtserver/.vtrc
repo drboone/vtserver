@@ -1,0 +1,20 @@
+# Contents of the 7th Edition boot tape
+# Record 0: 2 copies of device bootstrap (512 bytes) + boot
+# Record 1: standalone cat
+# Record 2: text file describing tape contents
+# Record 3: standalone mkfs
+# Record 4: standalone icheck
+# Record 5: standalone restor
+# Record 6: root dump, no /usr
+#
+# First line in this file is serial port device
+/dev/ttyd1
+#
+boot
+cat
+tape_contents
+mkfs
+icheck
+restor
+/usr/local/src/v7root.tar
+rkunix
