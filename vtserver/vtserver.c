@@ -94,6 +94,8 @@ struct vtcmd {
   unsigned char record;		/* Record we're accessing */
   unsigned char blklo;		/* Block number, in lo/hi format */
   unsigned char blkhi;
+  unsigned char blkHlo;
+  unsigned char blkHhi;
   unsigned char sum0;		/* 16-bit checksum */
   unsigned char sum1;		/* 16-bit checksum */
 };
@@ -267,12 +269,20 @@ unsigned char sum0,sum1;
 #define BOOTSTACK 0130000
 #define BOOTSTART 0140000
 int bootcode[]= {
+	0010706, 0005003, 0012701, 0177560, 0012704, 0140116, 0112400, 0100406,
+	0105761, 0000004, 0100375, 0110061, 0000006, 0000770, 0005267, 0000062,
+	0102003, 0005267, 0000055, 0005000, 0004767, 0000030, 0001403, 0012703,
+	0006400, 0005007, 0012702, 0001000, 0004767, 0000010, 0110023, 0005302,
+	0001373, 0000742, 0105711, 0100376, 0116100, 0000002, 0000207, 0025037,
+	0000000, 0000000, 0000000, 0177777
+};
+/* int bootcode[]= {   =This was the original bootcode=
 	0010706, 005003, 0012701, 0177560, 012704, 0140106, 0112400, 0100406,
 	0105761, 000004, 0100375, 0110061, 000006, 0000770, 0005267, 0000052,
 	0004767, 000030, 0001403, 0012703, 006400, 0005007, 0012702, 0001000,
 	0004767, 000010, 0110023, 0005302, 001373, 0000746, 0105711, 0100376,
 	0116100, 000002, 0000207, 0025037, 000000, 0000000, 0177777
-};
+}; */
 int havesentbootcode=1;		/* Don't send it unless user asks on cmd line */
 
 
@@ -336,16 +346,10 @@ int get_command(struct vtcmd *v)
 
   read0(portfd, &v->cmd, 1); read1(portfd, &v->record, 1);
   read0(portfd, &v->blklo, 1); read1(portfd, &v->blkhi, 1);
-  block = v->blkhi<<8&0xff00 | v->blklo&0xff;
-  if(block>=0xff00)
-	{
-	unsigned char tmp0,tmp1;
-
-	read0(portfd, &tmp0, 1);
-	read1(portfd, &tmp1, 1);
-	block = tmp1<<16&0xff0000 | tmp0<<8&0xff00 | v->blklo&0xff;
-	}
-
+  read0(portfd, &v->blkHlo, 1); read1(portfd, &v->blkHhi, 1);
+/*block = v->blkhi<<8&0xff00 | v->blklo&0xff;*/
+  block = (v->blkHhi<<24&0xff000000) | (v->blkHlo<<16&0xff0000) |
+	(v->blkhi<<8&0xff00) | (v->blklo&0xff);
 
   /* All done if a quick read */
   if (v->cmd == VTC_QUICK) return(1);
@@ -390,26 +394,16 @@ void send_reply()
   write1(portfd, &vtreply.hdr2, 1);
   write0(portfd, &vtreply.cmd, 1);
   write1(portfd, &vtreply.record, 1);
-  if(block<0xff00)
 	{
 	unsigned char tmp;
 
-	tmp = block;
+	tmp = (block&0xff);
 	write0(portfd, &tmp, 1);
-	tmp = block>>8;
+	tmp = (block>>8&0xff);
 	write1(portfd, &tmp, 1);
-	}
-  else
-	{
-	unsigned char tmp;
-
-	tmp = block;
+	tmp = (block>>16&0xff);
 	write0(portfd, &tmp, 1);
-	tmp = 0xff;
-	write1(portfd, &tmp, 1);
-	tmp = block>>8;
-	write0(portfd, &tmp, 1);
-	tmp = block>>16;
+	tmp = (block>>24&0xff);
 	write1(portfd, &tmp, 1);
 	}
 

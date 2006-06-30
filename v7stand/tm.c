@@ -1,112 +1,133 @@
-#
-
 /*
- * TM tape driver
+ * Copyright (c) 1986 Regents of the University of California.
+ * All rights reserved.  The Berkeley software License Agreement
+ * specifies the terms and conditions for redistribution.
+ *
+ *	@(#)tm.c	2.3 (2.11BSD) 1997/1/19
  */
 
-#include <sys/param.h>
-#include <sys/inode.h>
+/*
+ * TM11 - TU10/TE10/TS03 standalone tape driver
+ */
+
+#include "../h/param.h"
+#include "../pdpuba/tmreg.h"
 #include "saio.h"
 
-struct device {
-	int	tmer;
-	int	tmcs;
-	int	tmbc;
-	char	*tmba;
-	int	tmdb;
-	int	tmrd;
-};
+#define	NTM	2
 
-#define	TMADDR ((struct device *)0172520)
+	struct	tmdevice *TMcsr[NTM + 1] =
+		{
+		(struct tmdevice *)0172520,
+		(struct tmdevice *)0,
+		(struct tmdevice *)-1
+		};
 
-#define	GO	01
-#define	RCOM	02
-#define	WCOM	04
-#define	WEOF	06
-#define	SFORW	010
-#define	SREV	012
-#define	WIRG	014
-#define	REW	016
-#define	DENS	060000		/* 9-channel */
-#define	IENABLE	0100
-#define	CRDY	0200
-#define GAPSD	010000
-#define	TUR	1
-#define	SDWN	010
-#define	HARD	0102200	/* ILC, EOT, NXM */
-#define	EOF	0040000
+extern int tapemark;	/* flag to indicate tapemark 
+			has been encountered (see sys.c) 	*/
 
-#define	SSEEK	1
-#define	SIO	2
+/*
+ * Bits in device code.
+ */
+#define	T_NOREWIND	04		/* not used in stand alone driver */
+#define	TMDENS(dev)	(((dev) & 030) >> 3)
 
-
-tmrew(io)
-register struct iob *io;
+tmclose(io)
+	struct iob *io;
 {
-	tmstrategy(io, REW);
+	tmstrategy(io, TM_REW);
 }
 
 tmopen(io)
-register struct iob *io;
+	register struct iob *io;
 {
 	register skip;
 
-	tmstrategy(io, REW);
-	skip = io->i_boff;
+	if (genopen(NTM, io) < 0)
+		return(-1);
+	io->i_flgs |= F_TAPE;
+	tmstrategy(io, TM_REW);
+	skip = io->i_part;
 	while (skip--) {
 		io->i_cc = 0;
-		while (tmstrategy(io, SFORW))
-			;
+		while (tmstrategy(io, TM_SFORW))
+			continue;
 	}
+	return(0);
 }
-tmstrategy(io, func)
-register struct iob *io;
-{
-	register int com, unit, errcnt;
 
-	unit = io->i_unit;
-	errcnt = 0;
+u_short tmdens[4] = { TM_D800, TM_D1600, TM_D6250, TM_D800 };
+
+tmstrategy(io, func)
+	register struct iob *io;
+{
+	int com, unit = io->i_unit;
+	register struct tmdevice *tmaddr;
+	int errcnt = 0, ctlr = io->i_ctlr, bae, lo16, fnc;
+
+	tmaddr = TMcsr[ctlr];
 retry:
-	tmquiet();
-	com = (unit<<8)|(segflag<<4)|DENS;
-	TMADDR->tmbc = -io->i_cc;
-	TMADDR->tmba = io->i_ma;
-	if (func == READ)
-		TMADDR->tmcs = com | RCOM | GO;
-	else if (func == WRITE)
-		TMADDR->tmcs = com | WCOM | GO;
-	else if (func == SREV) {
-		TMADDR->tmbc = -1;
-		TMADDR->tmcs = com | SREV | GO;
+	while ((tmaddr->tmcs&TM_CUR) == 0)
+		continue;
+	while ((tmaddr->tmer&TMER_TUR) == 0)
+		continue;
+	while ((tmaddr->tmer&TMER_SDWN) != 0)
+		continue;
+	iomapadr(io->i_ma, &bae, &lo16);
+	com = (unit<<8)|(bae<<4) | tmdens[TMDENS(unit)];
+	tmaddr->tmbc = -io->i_cc;
+	tmaddr->tmba = (caddr_t)lo16;
+	switch	(func)
+		{
+		case	READ:
+			fnc = TM_RCOM;
+			break;
+		case	WRITE:
+			fnc = TM_WCOM;
+			break;
+/*
+ * Just pass all others thru - all other functions are TM_* opcodes and
+ * had better be valid.
+*/
+		default:
+			fnc = func;
+			break;
+		}
+	tmaddr->tmcs = com | fnc | TM_GO;
+	while ((tmaddr->tmcs&TM_CUR) == 0)
+		continue;
+	if (tmaddr->tmer&TMER_EOF) {
+		tapemark=1;
 		return(0);
-	} else
-		TMADDR->tmcs = com | func | GO;
-	while ((TMADDR->tmcs&CRDY) == 0)
-		;
-	if (TMADDR->tmer&EOF)
-		return(0);
-	if (TMADDR->tmer < 0) {
+	}
+	if (tmaddr->tmer & TM_ERR) {
 		if (errcnt == 0)
-			printf("tape error: er=%o", TMADDR->tmer);
-		if (errcnt==10) {
-			printf("\n");
+			printf("\n%s err: er=%o cs=%o",
+				devname(io), tmaddr->tmer, tmaddr->tmcs);
+		if (errcnt++ == 10) {
+			printf("\n(FATAL ERROR)\n");
 			return(-1);
 		}
-		errcnt++;
-		tmstrategy(io, SREV);
+		tmstrategy(io, TM_SREV);
 		goto retry;
 	}
-	if (errcnt)
-		printf(" recovered by retry\n");
-	return( io->i_cc+TMADDR->tmbc );
+	return(io->i_cc+tmaddr->tmbc);
 }
 
-tmquiet()
-{
-	while ((TMADDR->tmcs&CRDY) == 0)
-		;
-	while ((TMADDR->tmer&TUR) == 0)
-		;
-	while ((TMADDR->tmer&SDWN) != 0)
-		;
-}
+tmseek(io, space)
+	register struct iob *io;
+	long	space;
+	{
+	int	fnc;
+
+	if	(space < 0)
+		{
+		fnc = TM_SREV;
+		space = -space;
+		}
+	else
+		fnc = TM_SFORW;
+	io->i_cc = space;
+	tmstrategy(io, fnc);
+	return(0);
+	}
