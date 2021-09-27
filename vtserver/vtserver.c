@@ -83,7 +83,8 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
-char *strerror(int errno);
+#include <errno.h>
+/* char *strerror(int errno); */
 
 /* Commands sent in both directions */
 struct vtcmd {
@@ -124,7 +125,7 @@ struct vtcmd {
 #define BLKSIZE		512
 
 /* Static things */
-extern int errno;		/* Error from system calls etc. */
+/* extern int errno;		/* Error from system calls etc. */
 struct vtcmd vtcmd;		/* Command from client */
 struct vtcmd vtreply;		/* Reply to client */
 char inbuf[BLKSIZE];		/* Input buffer */
@@ -140,6 +141,8 @@ int recfd = -1;			/* File descriptor for the in-use record */
 int lastrec = -2;		/* Last record used */
 char *recname[256];		/* Up to 256 records on the tape */
 long block;			/* the block number (variable length field in protocol) */
+int odt = 0;
+int simh = 0;
 
 #ifndef _MSC_VER		/* I/O routines uniqie to UNIX */
 struct termios oldterm;		/* Original terminal settings */
@@ -338,7 +341,42 @@ int get_command(struct vtcmd *v)
     writeP(portfd, bootbuf, strlen(bootbuf));
     while (1) { readP(portfd, &ch, 1); writeC(ttyfd,&ch,1); if (ch=='p') break; }
     havesentbootcode=1; return(0);
-  }
+  } 
+  if ((havesentbootcode==0) && (v->hdr1 == 's')) {
+    writeC(ttyfd,&v->hdr1,1);
+	while (1) { readP(portfd, &ch, 1); writeC(ttyfd,&ch,1); if (ch==' ') break; }
+    for (i=0,loc=BOOTSTART;i<(sizeof(bootcode)/sizeof(int));i++,loc+=2) {
+	sprintf(bootbuf, "d %06o %06o\n", loc, bootcode[i]);
+	for (i = 0; i < strlen(bootbuf); i++)
+		writeC(ttyfd,&bootbuf[i],1);
+	writeP(portfd, bootbuf, strlen(bootbuf));
+
+	/* wait for current value to print */
+	while (1) { readP(portfd, &ch, 1); writeC(ttyfd,&ch,1); if (ch=='\n') break; }
+
+    }
+    sprintf(bootbuf, "d sp %06o\n", BOOTSTACK);
+	for (i = 0; i < strlen(bootbuf); i++)
+		writeC(ttyfd,&bootbuf[i],1);
+    writeP(portfd, bootbuf, strlen(bootbuf));
+    while (1) { readP(portfd, &ch, 1); writeC(ttyfd,&ch,1); if (ch=='\n') break; }
+    sprintf(bootbuf, "d pc %06o\n", BOOTSTART);
+	for (i = 0; i < strlen(bootbuf); i++)
+		writeC(ttyfd,&bootbuf[i],1);
+    writeP(portfd, bootbuf, strlen(bootbuf));
+    while (1) { readP(portfd, &ch, 1); writeC(ttyfd,&ch,1); if (ch==' ') break; }
+    sprintf(bootbuf, "d rs %06o\n", 0340);
+	for (i = 0; i < strlen(bootbuf); i++)
+		writeC(ttyfd,&bootbuf[i],1);
+    writeP(portfd, bootbuf, strlen(bootbuf));
+    while (1) { readP(portfd, &ch, 1); writeC(ttyfd,&ch,1); if (ch==' ') break; }
+    sprintf(bootbuf, "go\n");
+	for (i = 0; i < strlen(bootbuf); i++)
+		writeC(ttyfd,&bootbuf[i],1);
+    writeP(portfd, bootbuf, strlen(bootbuf));
+    while (1) { readP(portfd, &ch, 1); writeC(ttyfd,&ch,1); if (ch=='p') break; }
+    havesentbootcode=1; return(0);
+  } 
 
   if (v->hdr1 != VT_HDR1) { v->hdr1&= 127; writeC(1,&v->hdr1, 1); return(0); }
   read1(portfd, &v->hdr2, 1);
@@ -794,7 +832,16 @@ int main(int argc, char *argv[])
 	argc--;
 	}
 
-  if ((argc==2) && (!strcmp(argv[1], "-odt"))) havesentbootcode=0;
+  if ((argc==2) && (!strcmp(argv[1], "-odt")))
+  {
+  	havesentbootcode=0;
+	odt = 1;
+  }
+  if ((argc==2) && (!strcmp(argv[1], "-simh")))
+  {
+  	havesentbootcode=0;
+	simh = 1;
+  }
 
   read_config();
   open_port();
